@@ -1,0 +1,2 @@
+KERNEL=="sd*[!0-9]", SUBSYSTEMS=="usb", PROGRAM="/usr/local/sbin/diskusbserial %k", SYMLINK+="disk/by-id/diskusbserial-%c"
+KERNEL=="sd*[0-9]",  SUBSYSTEMS=="usb", PROGRAM="/usr/local/sbin/diskusbserial %k", SYMLINK+="disk/by-id/diskusbserial-%c-part%n"

@@ -1,0 +1,6 @@
+#!/bin/bash
+SERIAL="`/usr/sbin/hdparm -I /dev/$1 2>/dev/null| /usr/bin/grep -i 'serial number:'`"
+SERIAL="`/usr/bin/echo $SERIAL | /usr/bin/sed -e 's/serial number://ig'`"
+SERIAL="`/usr/bin/echo $SERIAL | /usr/bin/sed -e 's/ //ig'`"
+/usr/bin/test -n "$SERIAL"  && /usr/bin/echo "$SERIAL"
+
