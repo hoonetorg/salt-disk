@@ -10,6 +10,14 @@ disk_lvm__pkg_lvm2:
 {% endfor %}
 {% endif %}
 
+disk_lvm__file_/etc/lvm/lvm.conf:
+  augeas.change:
+    - name: /etc/lvm/lvm.conf
+    - context: /files/etc/lvm/lvm.conf
+    - changes:
+      - set global/dict/use_lvmetad/int 0
+
+
 {% for vg , vg_data in salt['pillar.get']('disk:lvm:vgs', {}).items()|sort %}
 {% if vg_data.pvs is defined and vg_data.pvs and vg_data.lvs is defined and vg_data.lvs %}
 
@@ -19,6 +27,7 @@ disk_lvm__pv_{{pv}}:
     - name: {{pv}}
     - require:
       - pkg: disk_lvm__pkg_lvm2
+      - augeas: disk_lvm__file_/etc/lvm/lvm.conf
 {% if vg_data.requires is defined and vg_data.requires %}
 {% for vgrequire in vg_data.requires %}
       - {{vgrequire}}
