@@ -15,8 +15,23 @@ disk_lvm__file_/etc/lvm/lvm.conf:
     - name: /etc/lvm/lvm.conf
     - context: /files/etc/lvm/lvm.conf
     - changes:
-      - set global/dict/use_lvmetad/int 0
+      - set global/dict/use_lvmetad/int 1
 
+disk_lvm__cmd_start_lvm2-lvmetad.service:
+  cmd.run:
+    - name: systemctl start lvm2-lvmetad.service
+    - unless: systemctl is-active lvm2-lvmetad.service
+    - require:
+      - pkg: disk_lvm__pkg_lvm2
+      - augeas: disk_lvm__file_/etc/lvm/lvm.conf
+
+disk_lvm__cmd_start_lvm2-monitor.service:
+  cmd.run:
+    - name: systemctl start lvm2-monitor.service
+    - unless: systemctl is-active lvm2-monitor.service
+    - require:
+      - pkg: disk_lvm__pkg_lvm2
+      - augeas: disk_lvm__file_/etc/lvm/lvm.conf
 
 {% for vg , vg_data in salt['pillar.get']('disk:lvm:vgs', {}).items()|sort %}
 {% if vg_data.pvs is defined and vg_data.pvs and vg_data.lvs is defined and vg_data.lvs %}
@@ -28,6 +43,8 @@ disk_lvm__pv_{{pv}}:
     - require:
       - pkg: disk_lvm__pkg_lvm2
       - augeas: disk_lvm__file_/etc/lvm/lvm.conf
+      - cmd: disk_lvm__cmd_start_lvm2-lvmetad.service
+      - cmd: disk_lvm__cmd_start_lvm2-monitor.service
 {% if vg_data.requires is defined and vg_data.requires %}
 {% for vgrequire in vg_data.requires %}
       - {{vgrequire}}
