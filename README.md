@@ -1,1 +1,1 @@
-# salt-disk
+# salt-disk-formula
