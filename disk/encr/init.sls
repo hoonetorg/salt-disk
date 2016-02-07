@@ -1,6 +1,6 @@
 # vim: sts=2 ts=2 sw=2 et ai
 {% from "disk/map.jinja" import disk with context %}
-#{{disk|yaml}}
+
 disk_encr__pkg_cryptsetup:
   pkg.installed:
     - pkgs: {{disk.pkgs.encr|yaml}}
