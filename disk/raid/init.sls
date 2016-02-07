@@ -1,8 +1,10 @@
+# vim: sts=2 ts=2 sw=2 et ai
+{% from "disk/map.jinja" import disk with context %}
+
 disk_raid__pkg__mdadm:
-  pkg:
-    - name: mdadm
-    - installed
-{% set slsrequires =salt['pillar.get']('disk:raid:slsrequires', False) %}
+  pkg.installed:
+    - pkgs: {{disk.pkgs.raid}}
+{% set slsrequires = disk.raid.slsrequires|default(False) %}
 {% if slsrequires is defined and slsrequires %}
     - require:
 {% for slsrequire in slsrequires %}
@@ -12,7 +14,7 @@ disk_raid__pkg__mdadm:
 
 {% set mdadmconf = "/etc/mdadm.conf" %}
 
-{% for md , md_data in salt['pillar.get']('disk:raid:mds', {}).items()|sort %}
+{% for md , md_data in disk.raid.mds.items()|default({})|sort %}
 {% if md_data.level is defined and md_data.level and md_data.metadata is defined and md_data.metadata and md_data.devices is defined and md_data.devices %}
 
 disk_raid__create_{{md}}:
