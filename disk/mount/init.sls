@@ -1,8 +1,10 @@
-disk_mount__pkg_e2fsprogs:
-  pkg:
-    - name: e2fsprogs
-    - installed
-{% set slsrequires =salt['pillar.get']('disk:mount:slsrequires', False) %}
+# vim: sts=2 ts=2 sw=2 et ai
+{% from "disk/map.jinja" import disk with context %}
+
+disk_mount__pkg_fsprogs:
+  pkg.installed:
+    - pkgs: {{disk.pkgs.mount}}
+{% set slsrequires = disk.mount.slsrequires|default(False) %}
 {% if slsrequires is defined and slsrequires %}
     - require:
 {% for slsrequire in slsrequires %}
@@ -10,7 +12,7 @@ disk_mount__pkg_e2fsprogs:
 {% endfor %}
 {% endif %}
 
-{% for mount , mount_data in salt['pillar.get']('disk:mount:mounts', {}).items() %}
+{% for mount , mount_data in disk.mount.mounts.items()|default({}) %}
 {% if mount_data.device is defined and mount_data.device and mount_data.fstype is defined and mount_data.fstype %}
 
 disk_mount__blockdev_{{mount_data.device}}:
@@ -18,7 +20,7 @@ disk_mount__blockdev_{{mount_data.device}}:
     - name: test -z "`lsblk -o fstype {{mount_data.device}}|tail -1`" && mkfs.{{mount_data.fstype}} {% if mount_data.mkfsopts is defined and mount_data.mkfsopts %} {{mount_data.mkfsopts}} {% endif %} {{mount_data.device}} && sync && udevadm settle && lsblk -o fstype {{mount_data.device}} |tail -1|grep {{mount_data.fstype}}
     - unless: lsblk -o fstype {{mount_data.device}} |tail -1|grep {{mount_data.fstype}}
     - require:
-      - pkg: disk_mount__pkg_e2fsprogs
+      - pkg: disk_mount__pkg_fsprogs
 {% if mount_data.requires is defined and mount_data.requires %}
 {% for mountrequire in mount_data.requires %}
       - {{mountrequire}}
@@ -37,7 +39,7 @@ disk_mount__blockdev_{{mount_data.device}}:
     - inode_size: {{mount_data.inodesize}}
 {% endif %} 
     - require:
-      - pkg: disk_mount__pkg_e2fsprogs
+      - pkg: disk_mount__pkg_fsprogs
 {% if mount_data.requires is defined and mount_data.requires %}
 {% for mountrequire in mount_data.requires %}
       - {{mountrequire}}
