@@ -1,10 +1,10 @@
-{% set initial_passwd = pillar['initial_passwd'] %}
+# vim: sts=2 ts=2 sw=2 et ai
+{% from "disk/map.jinja" import disk with context %}
 
 disk_encr__pkg_cryptsetup:
-  pkg:
-    - name: cryptsetup
-    - installed
-{% set slsrequires =salt['pillar.get']('disk:encr:slsrequires', False) %}
+  pkg.installed:
+    - pkgs: {{disk.crypt.pkgs|yaml}}
+{% set slsrequires = disk.encr.slsrequires|default(False) %}
 {% if slsrequires is defined and slsrequires %}
     - require:
 {% for slsrequire in slsrequires %}
@@ -22,10 +22,14 @@ disk_encr__file_/etc/crypttab.d:
     - require:
       - pkg: disk_encr__pkg_cryptsetup
 
-disk_encr__file_/etc/crypttab.d/keyfile:
+{% for encrdisk , encrdisk_data in disk.encr.disks.items()|default({}) %}
+{% if encrdisk_data.device is defined and encrdisk_data.device %}
+
+disk_encr__file_/etc/crypttab.d/keyfile-{{encrdisk}}:
   file.managed:
     - name: /etc/crypttab.d/keyfile
-    - source: salt://files/keys/disks/keyfile
+    - content: {{ salt['hashutil.base64_decodestring'](encrdisk_data.keyfile_base64)|yaml }}
+    - contents_newline : False
     - show_diff: False
     - user: root
     - group: root
@@ -33,16 +37,12 @@ disk_encr__file_/etc/crypttab.d/keyfile:
     - require:
       - file: disk_encr__file_/etc/crypttab.d
 
-
-{% for encrdisk , encrdisk_data in salt['pillar.get']('disk:encr:disks', {}).items() %}
-{% if encrdisk_data.device is defined and encrdisk_data.device %}
-
 disk_encr__luks_create_{{encrdisk}}:
   cmd.run:
     - unless: "cryptsetup isLuks {{encrdisk_data.device}}"
     - name: "yes|cryptsetup luksFormat -c aes-xts-plain64 -s 512 -h sha512 -i 5000 --use-random --align-payload=2048 --key-slot=0 {{encrdisk_data.device}} /etc/crypttab.d/keyfile"
     - require:
-      - file: disk_encr__file_/etc/crypttab.d/keyfile
+      - file: disk_encr__file_/etc/crypttab.d/keyfile-{{encrdisk}}
 {% if encrdisk_data.requires is defined and encrdisk_data.requires %}
 {% for encrdiskrequire in encrdisk_data.requires %}
       - {{encrdiskrequire}}
@@ -52,9 +52,9 @@ disk_encr__luks_create_{{encrdisk}}:
 disk_encr__luks_addpw_{{encrdisk}}:
   cmd.run:
     - unless: "cryptsetup luksDump {{encrdisk_data.device}}|grep -q 'Key Slot 1: ENABLED'" 
-    - name: "echo '{{ initial_passwd }}' |cryptsetup luksAddKey --key-slot=1 --key-file=/etc/crypttab.d/keyfile {{encrdisk_data.device}}"
+    - name: "echo '{{ encrdisk_data.passwd|default(disk.encr.defaultpasswd) }}' |cryptsetup luksAddKey --key-slot=1 --key-file=/etc/crypttab.d/keyfile {{encrdisk_data.device}}"
     - require:
-      - file: disk_encr__file_/etc/crypttab.d/keyfile
+      - file: disk_encr__file_/etc/crypttab.d/keyfile-{{encrdisk}}
       - cmd: disk_encr__luks_create_{{encrdisk}}
 
 disk_encr__luks_open_{{encrdisk}}:
@@ -62,20 +62,18 @@ disk_encr__luks_open_{{encrdisk}}:
     - unless: "stat /dev/mapper/{{encrdisk}}"
     - name: cryptsetup luksOpen --allow-discards --key-slot=0 --key-file=/etc/crypttab.d/keyfile {{encrdisk_data.device}} {{encrdisk}}
     - require:
-      - file: disk_encr__file_/etc/crypttab.d/keyfile
+      - file: disk_encr__file_/etc/crypttab.d/keyfile-{{encrdisk}}
       - cmd: disk_encr__luks_create_{{encrdisk}}
     - require_in:
       - file: disk_encr__/etc/crypttab
 
-{% endif %} 
-{% endfor %}
-
-disk_encr__/etc/crypttab:
-  file.append:
+disk_encr__/etc/crypttab_{{encrdisk}}:
+  file.replace:
     - name: /etc/crypttab
-    - text:
-{% for encrdisk , encrdisk_data in salt['pillar.get']('disk:encr:disks', {}).items() %}
-{% if encrdisk_data.device is defined and encrdisk_data.device %}
-      - "{{encrdisk}} {{encrdisk_data.device}} /etc/crypttab.d/keyfile    luks,discard,key-slot=0"
+    - pattern: ^\s*{{entity}}\s+.*$
+    - pattern: ^\s*{{encrdisk}}\s+.*$
+    - repl: "{{encrdisk}} {{encrdisk_data.device}} /etc/crypttab.d/keyfile luks,discard,key-slot=0"
+    - count: 1
+    - append_if_not_found: True
 {% endif %} 
 {% endfor %}

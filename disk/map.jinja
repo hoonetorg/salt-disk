@@ -1,0 +1,38 @@
+# -*- coding: utf-8 -*-
+# vim: ft=jinja
+
+{% import_yaml 'disk/defaults.yaml' as default_settings %}
+
+{% set os_family_map = salt['grains.filter_by']({
+        'Debian': {
+            "sysconfdir" : '/etc/default',
+            "mount" : {
+              "pkgs" : [
+                e2fsprogs,
+                btrfs-tools,
+                xfsprogs,
+              ],
+            },
+        },
+        'RedHat': {
+            "sysconfdir": '/etc/sysconfig',
+            "mount" : {
+              "pkgs" : [
+                e2fsprogs,
+                btrfs-progs,
+                xfsprogs,
+              ],
+            },
+        },
+  }
+  , grain="os_family"
+  , merge=salt['pillar.get']('disk:lookup'))
+%}
+{% do default_settings.disk.update(os_family_map) %}
+
+{% set disk = salt['pillar.get'](
+        'disk',
+        default=default_settings.disk,
+        merge=True
+    )
+%}
