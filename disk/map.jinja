@@ -5,22 +5,40 @@
 
 {% set os_family_map = salt['grains.filter_by']({
         'Debian': {
-            "sysconfdir" : '/etc/default',
-            "mount" : {
-              "pkgs" : [
+            'sysconfdir' : '/etc/default',
+            'pkgs' : {
+              'mount' : [
                 'e2fsprogs',
                 'btrfs-tools',
                 'xfsprogs',
               ],
+              'encr' : [ 
+                'cryptsetup',
+              ],
+              'lvm' : [
+                'lvm2',
+              ],
+              'raid' : [
+                'mdadm',
+              ],
             },
         },
         'RedHat': {
-            "sysconfdir": '/etc/sysconfig',
-            "mount" : {
-              "pkgs" : [
+            'sysconfdir': '/etc/sysconfig',
+            'pkgs' : {
+              'mount' : [
                 'e2fsprogs',
                 'btrfs-progs',
                 'xfsprogs',
+              ],
+             'encr' : [
+                'cryptsetup',
+              ],
+              'lvm' : [
+                'lvm2',
+              ],
+              'raid' : [
+                'mdadm',
               ],
             },
         },

@@ -1,13 +1,4 @@
 # -*- coding: utf-8 -*-
 # vim: ft=yaml
 disk:
-  encr:
-    pkgs: 
-      - cryptsetup
-    defaultpasswd: hoonetorg
-  lvm:
-    pkgs: 
-      - lvm2
-  raid:
-    pkgs: 
-      - mdadm
+  defaultpasswd: hoonetorg
