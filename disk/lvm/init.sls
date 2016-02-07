@@ -2,9 +2,8 @@
 {% from "disk/map.jinja" import disk with context %}
 
 disk_lvm__pkg_lvm2:
-  pkg:
-    - name: {{disk.pkgs.lvm}}
-    - installed
+  pkg.installed:
+    - pkgs: {{disk.pkgs.lvm}}
 {% set slsrequires = disk.lvm.slsrequires|default(False) %}
 {% if slsrequires is defined and slsrequires %}
     - require:
