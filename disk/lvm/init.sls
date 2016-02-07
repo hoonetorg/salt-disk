@@ -1,8 +1,8 @@
 disk_lvm__pkg_lvm2:
   pkg:
-    - name: lvm2
+    - name: {{disk.pkgs.lvm}}
     - installed
-{% set slsrequires =salt['pillar.get']('disk:lvm:slsrequires', False) %}
+{% set slsrequires = disk.lvm.slsrequires|default(False) %}
 {% if slsrequires is defined and slsrequires %}
     - require:
 {% for slsrequire in slsrequires %}
@@ -33,7 +33,7 @@ disk_lvm__cmd_start_lvm2-monitor.service:
       - pkg: disk_lvm__pkg_lvm2
       - augeas: disk_lvm__file_/etc/lvm/lvm.conf
 
-{% for vg , vg_data in salt['pillar.get']('disk:lvm:vgs', {}).items()|sort %}
+{% for vg , vg_data in disk.lvm.vgs.items()|default({})|sort %}
 {% if vg_data.pvs is defined and vg_data.pvs and vg_data.lvs is defined and vg_data.lvs %}
 
 {% for pv in vg_data.pvs|sort %}
