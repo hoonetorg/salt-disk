@@ -3,7 +3,7 @@
 
 disk_encr__pkg_cryptsetup:
   pkg.installed:
-    - pkgs: {{disk.crypt.pkgs|yaml}}
+    - pkgs: [ 'cryptsetup' ]
 {% set slsrequires = disk.encr.slsrequires|default(False) %}
 {% if slsrequires is defined and slsrequires %}
     - require:
@@ -27,8 +27,8 @@ disk_encr__file_/etc/crypttab.d:
 
 disk_encr__file_/etc/crypttab.d/keyfile-{{encrdisk}}:
   file.managed:
-    - name: /etc/crypttab.d/keyfile
-    - content: {{ salt['hashutil.base64_decodestring'](encrdisk_data.keyfile_base64)|yaml }}
+    - name: /etc/crypttab.d/keyfile-{{encrdisk}}
+    - contents: {{ salt['hashutil.base64_decodestring'](encrdisk_data.keyfile_base64)|yaml|indent(8) }}
     - contents_newline : False
     - show_diff: False
     - user: root
@@ -40,7 +40,7 @@ disk_encr__file_/etc/crypttab.d/keyfile-{{encrdisk}}:
 disk_encr__luks_create_{{encrdisk}}:
   cmd.run:
     - unless: "cryptsetup isLuks {{encrdisk_data.device}}"
-    - name: "yes|cryptsetup luksFormat -c aes-xts-plain64 -s 512 -h sha512 -i 5000 --use-random --align-payload=2048 --key-slot=0 {{encrdisk_data.device}} /etc/crypttab.d/keyfile"
+    - name: "yes|cryptsetup luksFormat -c aes-xts-plain64 -s 512 -h sha512 -i 5000 --use-random --align-payload=2048 --key-slot=0 {{encrdisk_data.device}} /etc/crypttab.d/keyfile-{{encrdisk}}"
     - require:
       - file: disk_encr__file_/etc/crypttab.d/keyfile-{{encrdisk}}
 {% if encrdisk_data.requires is defined and encrdisk_data.requires %}
@@ -52,7 +52,7 @@ disk_encr__luks_create_{{encrdisk}}:
 disk_encr__luks_addpw_{{encrdisk}}:
   cmd.run:
     - unless: "cryptsetup luksDump {{encrdisk_data.device}}|grep -q 'Key Slot 1: ENABLED'" 
-    - name: "echo '{{ encrdisk_data.passwd|default(disk.encr.defaultpasswd) }}' |cryptsetup luksAddKey --key-slot=1 --key-file=/etc/crypttab.d/keyfile {{encrdisk_data.device}}"
+    - name: "echo '{{ encrdisk_data.passwd|default(disk.encr.defaultpasswd) }}' |cryptsetup luksAddKey --key-slot=1 --key-file=/etc/crypttab.d/keyfile-{{encrdisk}} {{encrdisk_data.device}}"
     - require:
       - file: disk_encr__file_/etc/crypttab.d/keyfile-{{encrdisk}}
       - cmd: disk_encr__luks_create_{{encrdisk}}
@@ -60,19 +60,18 @@ disk_encr__luks_addpw_{{encrdisk}}:
 disk_encr__luks_open_{{encrdisk}}:
   cmd.run:
     - unless: "stat /dev/mapper/{{encrdisk}}"
-    - name: cryptsetup luksOpen --allow-discards --key-slot=0 --key-file=/etc/crypttab.d/keyfile {{encrdisk_data.device}} {{encrdisk}}
+    - name: cryptsetup luksOpen --allow-discards --key-slot=0 --key-file=/etc/crypttab.d/keyfile-{{encrdisk}} {{encrdisk_data.device}} {{encrdisk}}
     - require:
       - file: disk_encr__file_/etc/crypttab.d/keyfile-{{encrdisk}}
       - cmd: disk_encr__luks_create_{{encrdisk}}
     - require_in:
-      - file: disk_encr__/etc/crypttab
+      - file: disk_encr__/etc/crypttab_{{encrdisk}}
 
 disk_encr__/etc/crypttab_{{encrdisk}}:
   file.replace:
     - name: /etc/crypttab
-    - pattern: ^\s*{{entity}}\s+.*$
     - pattern: ^\s*{{encrdisk}}\s+.*$
-    - repl: "{{encrdisk}} {{encrdisk_data.device}} /etc/crypttab.d/keyfile luks,discard,key-slot=0"
+    - repl: "{{encrdisk}} {{encrdisk_data.device}} /etc/crypttab.d/keyfile-{{encrdisk}} luks,discard,key-slot=0"
     - count: 1
     - append_if_not_found: True
 {% endif %} 
