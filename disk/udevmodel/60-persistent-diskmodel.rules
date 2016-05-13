@@ -1,0 +1,2 @@
+KERNEL=="sd*[!0-9]", SUBSYSTEMS=="scsi", PROGRAM="/usr/local/sbin/diskmodel %k", SYMLINK+="disk/by-id/diskmodel-%c"
+KERNEL=="sd*[0-9]",  SUBSYSTEMS=="scsi", PROGRAM="/usr/local/sbin/diskmodel %k", SYMLINK+="disk/by-id/diskmodel-%c-part%n"
