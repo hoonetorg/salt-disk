@@ -1,6 +1,6 @@
 #!/bin/bash
 MODEL="`/usr/sbin/hdparm -I /dev/$1 2>/dev/null| /usr/bin/grep -i 'model number:'`"
-MODEL="`/usr/bin/echo $MODEL | /usr/bin/awk -F ":" '{print $2}'
-MODEL="`/usr/bin/echo $MODEL | /usr/bin/awk '{print $1}'
+MODEL="`/usr/bin/echo $MODEL | /usr/bin/awk -F ":" '{print $2}'`"
+MODEL="`/usr/bin/echo $MODEL | /usr/bin/awk '{print $1}'`"
 /usr/bin/test -n "$MODEL"  && /usr/bin/echo "$MODEL"
 
