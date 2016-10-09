@@ -41,7 +41,7 @@ disk_mount__blockdev_{{mount_data.devices|join('_')}}:
   module.run:
     - name: btrfs.mkfs
     - devices: {{mount_data.devices|json}}
-    - kwargs: {{mount_data.get('btrfs_opts', {})|json}}
+    - kwargs: {{mount_data.get('mkfsopts', {})|json}}
     - unless: 
       {% for device in mount_data.devices %}
       - lsblk -o fstype {{device}} |tail -1|grep {{mount_data.fstype}}
