@@ -52,7 +52,7 @@ disk_encr__luks_create_{{encrdisk}}:
 disk_encr__luks_addpw_{{encrdisk}}:
   cmd.run:
     - unless: "cryptsetup luksDump {{encrdisk_data.device}}|grep -q 'Key Slot 1: ENABLED'" 
-    - name: "echo '{{ encrdisk_data.passwd|default(disk.defaultpasswd) }}' |cryptsetup luksAddKey --key-slot=1 --key-file=/etc/crypttab.d/keyfile-{{encrdisk}} {{encrdisk_data.device}}"
+    - name: "echo '{{ encrdisk_data.passwd|default(disk.defaultpasswd) }}' |cryptsetup luksAddKey --key-slot=1 --force-password --key-file=/etc/crypttab.d/keyfile-{{encrdisk}} {{encrdisk_data.device}}"
     - require:
       - file: disk_encr__file_/etc/crypttab.d/keyfile-{{encrdisk}}
       - cmd: disk_encr__luks_create_{{encrdisk}}
