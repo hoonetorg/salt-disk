@@ -1,0 +1,20 @@
+disk:
+  lookup:
+    part:
+      devices:
+        /dev/sdb:
+          1:
+            name: "linuxfs"
+            start: 1MiB
+            end: 5120MiB
+            type: 8300
+          2:
+            name: "linuxlvm"
+            start: 0
+            end: +10240MiB
+            type: 8e00
+          3:
+            name: "linuxmd"
+            start: 0
+            end: +10240MiB
+            type: fd00

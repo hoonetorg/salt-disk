@@ -7,6 +7,11 @@
         'Debian': {
             'sysconfdir' : '/etc/default',
             'pkgs' : {
+              'part' : [ 
+                'util-linux',
+                'parted',
+                'gdisk',
+              ],
               'mount' : [
                 'e2fsprogs',
                 'btrfs-tools',
@@ -26,6 +31,11 @@
         'RedHat': {
             'sysconfdir': '/etc/sysconfig',
             'pkgs' : {
+              'part' : [ 
+                'util-linux',
+                'parted',
+                'gdisk',
+              ],
               'mount' : [
                 'e2fsprogs',
                 'btrfs-progs',
