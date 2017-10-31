@@ -36,7 +36,7 @@ disk_lvm__cmd_start_lvm2-monitor.service:
       - augeas: disk_lvm__file_/etc/lvm/lvm.conf
 
 {% for vg , vg_data in disk.lvm.vgs.items()|default({})|sort %}
-{% if vg_data.pvs is defined and vg_data.pvs and vg_data.lvs is defined and vg_data.lvs %}
+{% if vg_data.pvs is defined and vg_data.pvs %}
 
 {% for pv in vg_data.pvs|sort %}
 disk_lvm__pv_{{pv}}:
@@ -62,8 +62,11 @@ disk_lvm__vg_{{vg}}:
     - require:
 {% for pv in vg_data.pvs|sort %}
       - lvm: disk_lvm__pv_{{pv}}
-{% endfor -%}
+{% endfor %}
 
+{% endif %}
+
+{% if vg_data.pvs is defined and vg_data.pvs and vg_data.lvs is defined and vg_data.lvs %}
 {% for lv , lv_data in vg_data.lvs.items()|sort %}
 disk_lvm__lv_{{vg}}_{{lv}}:
   lvm.lv_present:
