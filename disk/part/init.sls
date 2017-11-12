@@ -25,7 +25,7 @@ disk_part__create_part_table_{{ device }}:
     - name: parted.mklabel
     - device: {{ device }}
     - label_type: {{ device_data.label_type|default('gpt') }} 
-    - unless: partprobe  {{ device }} && parted -s {{ device }} print
+    - unless: partprobe  {{ device }} && udevadm settle && parted -s {{ device }} print
     - python_shell: True
     - require:
       - pkg: disk_part__pkg_partprogs
@@ -33,8 +33,8 @@ disk_part__create_part_table_{{ device }}:
   {% for part, part_data in device_data.items() %}
 disk_part__create_part_{{ device }}_{{ part }}:
   cmd.run:
-    - name: 'sgdisk -n {{ part }}:{{ part_data.start }}:{{ part_data.end }} -c {{ part }}:"{{ part_data.name }}" -t {{ part }}:{{ part_data.type }} {{ device }} && partprobe {{ device }}'
-    - unless: partprobe {{device }} && lsblk {{ device }}{{ part_prefix }}{{ part }}
+    - name: 'sgdisk -n {{ part }}:{{ part_data.start }}:{{ part_data.end }} -c {{ part }}:"{{ part_data.name }}" -t {{ part }}:{{ part_data.type }} {{ device }} && partprobe {{ device }} && udevadm settle'
+    - unless: partprobe {{device }} && udevadm settle && lsblk {{ device }}{{ part_prefix }}{{ part }}
     - require:
       - module: disk_part__create_part_table_{{ device }}
     {% for partrequire in part_data.get('requires', []) %}
