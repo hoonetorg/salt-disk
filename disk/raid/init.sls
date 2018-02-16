@@ -15,7 +15,7 @@ disk_raid__pkg__mdadm:
 {% set mdadmconf = "/etc/mdadm.conf" %}
 
 {% for md , md_data in disk.raid.mds.items()|default({})|sort %}
-{% if md_data.level is defined and md_data.level and md_data.metadata is defined and md_data.metadata and md_data.devices is defined and md_data.devices %}
+{% if md_data.get('level', False) and md_data.get('metadata', False) and md_data.get('devices', False) %}
 
 disk_raid__create_{{md}}:
   cmd.run:
