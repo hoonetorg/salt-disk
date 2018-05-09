@@ -25,17 +25,24 @@ disk_encr__file_/etc/crypttab.d:
 {% for encrdisk , encrdisk_data in disk.encr.disks.items()|default({}) %}
 {% if encrdisk_data.device is defined and encrdisk_data.device %}
 
+disk_encr__file_/etc/crypttab.d/keyfile-{{encrdisk}}_decode:
+  file.decode:
+    - name: /etc/crypttab.d/keyfile-{{encrdisk}}
+    - encoding_type: base64
+    - encoded_data: {# salt['hashutil.base64_b64decode'](encrdisk_data.keyfile_base64)|yaml|indent(8) #}
+    - encoded_data: |
+        {{ encrdisk_data.keyfile_base64|indent(8) }}
+    - require:
+      - file: disk_encr__file_/etc/crypttab.d
+
 disk_encr__file_/etc/crypttab.d/keyfile-{{encrdisk}}:
   file.managed:
     - name: /etc/crypttab.d/keyfile-{{encrdisk}}
-    - contents: {{ salt['hashutil.base64_decodestring'](encrdisk_data.keyfile_base64)|yaml|indent(8) }}
-    - contents_newline : False
-    - show_diff: False
     - user: root
     - group: root
     - mode: 400
     - require:
-      - file: disk_encr__file_/etc/crypttab.d
+      - file: disk_encr__file_/etc/crypttab.d/keyfile-{{encrdisk}}_decode
 
 disk_encr__luks_create_{{encrdisk}}:
   cmd.run:
