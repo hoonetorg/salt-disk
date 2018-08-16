@@ -38,6 +38,7 @@ disk_encr__file_/etc/crypttab.d/keyfile-{{encrdisk}}_decode:
 disk_encr__file_/etc/crypttab.d/keyfile-{{encrdisk}}:
   file.managed:
     - name: /etc/crypttab.d/keyfile-{{encrdisk}}
+    - replace: False
     - user: root
     - group: root
     - mode: 400
